@@ -27,6 +27,7 @@ namespace SSH
             mMainController.LblModo1            = LblModo1;
             mMainController.LblActionRequeried  = LblActionRequeried;
             mMainController.PicArmado           = PictureArmado;
+            mMainController.PicBateria          = PictureBattery;
             mMainController.IniciarInterfaz();
 
 
@@ -104,12 +105,12 @@ namespace SSH
 
         private void ButtonPanic_Click(object sender, EventArgs e)
         {
-
+            mMainController.ActivarAlarmaPanico();
         }
 
         private void ButtonBomberos_Click(object sender, EventArgs e)
         {
-
+            mMainController.ActivarAlarmaBomberos();
         }
 
         

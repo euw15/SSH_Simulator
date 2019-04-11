@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Controller\ControladorSSH.cs" />
     <Compile Include="Model\Alertas.cs" />
+    <Compile Include="Model\Bateria.cs" />
     <Compile Include="Model\Sensor.cs" />
     <Compile Include="Model\Sensores.cs" />
     <Compile Include="View\Main.cs">

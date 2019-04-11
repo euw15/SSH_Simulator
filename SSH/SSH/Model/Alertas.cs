@@ -14,6 +14,7 @@ namespace SSH.Model
 
         public Alertas()
         {
+            mNumeroTelefono = "22550505";
             mCodigoDeArmado = 123;
         }
     }

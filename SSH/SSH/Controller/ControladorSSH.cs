@@ -44,6 +44,7 @@ namespace SSH.Controller
         public Label LblComando         { get; set; }
         public Label LblActionRequeried { get; set; }
         public PictureBox PicArmado     { get; set; }
+        public PictureBox PicBateria    { get; set; }
 
         private Dictionary<string, Comandos>    mComandoEnumDict       = null;
         private Dictionary<Comandos, Delegate>  mDelegateComandos      = null;
@@ -54,10 +55,14 @@ namespace SSH.Controller
 
         Alertas  mAlertasModel;
         Sensores mSensoresModel;
+        Bateria  mBateria;
 
         ArmadoSistema mArmadoSistema;
 
-        private Timer mRefreshSensorsTimer = null;
+        private Timer mRefreshSensorsTimer  = null;
+        private Timer mCheckSensorState     = null;
+
+        System.Media.SoundPlayer mAlarmSound = new System.Media.SoundPlayer(@".//alert.wav");
 
         public ControladorSSH()
         {
@@ -81,13 +86,20 @@ namespace SSH.Controller
 
             mAlertasModel    = new Alertas();
             mSensoresModel   = new Sensores();
+            mBateria         = new Bateria();
             commandCallState = EnterCmdState.primeraLlamada;
             mArmadoSistema   = ArmadoSistema.Desarmado;
             
             mRefreshSensorsTimer = new Timer();
             mRefreshSensorsTimer.Tick += new EventHandler(RefreshSensors);
-            mRefreshSensorsTimer.Interval = 2000;
+            mRefreshSensorsTimer.Tick += new EventHandler(RegreshBattery);
+            mRefreshSensorsTimer.Interval = 1000;
             mRefreshSensorsTimer.Start();
+
+            mCheckSensorState = new Timer();
+            mCheckSensorState.Tick += new EventHandler(CheckSensorStatus);
+            mCheckSensorState.Interval = 2000;
+            mCheckSensorState.Start();
         }
 
         public void IniciarInterfaz()
@@ -274,6 +286,8 @@ namespace SSH.Controller
                     LblModo1.Visible = false;
                     LblModo0.Visible = false;
                     PicArmado.Image = global::SSH.Properties.Resources.iconfinder_ledorange_1787;
+                    mAlarmSound.Stop();
+                    mCheckSensorState.Start();
                 }
                 else
                 {
@@ -313,7 +327,6 @@ namespace SSH.Controller
             if (!string.IsNullOrEmpty(mValorIngresado))
             {
                 mAlertasModel.mNumeroTelefono = mValorIngresado;
-                MessageBox.Show("Numero agencia: " + mAlertasModel.mCodigoDeArmado);
             }
             else
             {
@@ -379,6 +392,20 @@ namespace SSH.Controller
             return true;
         }
 
+        public void ActivarAlarmaBomberos()
+        {
+            mAlarmSound.PlayLooping();
+            MessageBox.Show("Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + " por alarma de incendio");
+           // LblActionRequeried.Text = "Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + "\r\npor alarma de incendio";
+           // LblActionRequeried.Visible = true;
+        }
+
+        public void ActivarAlarmaPanico()
+        {
+            mAlarmSound.PlayLooping();
+            MessageBox.Show("Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + " por alarma de panico");
+        }
+
         private void CleanCommandView()
         {
             LblActionRequeried.Visible = false;
@@ -389,6 +416,78 @@ namespace SSH.Controller
         private void RefreshSensors(object sender, EventArgs e)
         {
            mSensoresModel.LeerEstadoSensores();
+        }
+
+        private void RegreshBattery(object sender, EventArgs e)
+        {
+            if (mBateria.isBatteryLow())
+            {
+                LblBateria.Visible = true;
+                PicBateria.Image = global::SSH.Properties.Resources.iconfinder_ledgreen_1784;
+            }
+            else
+            {
+                LblBateria.Visible = false;
+                PicBateria.Image = global::SSH.Properties.Resources.iconfinder_ledorange_1787;
+            }
+        }
+
+        private void CheckSensorStatus(object sender, EventArgs e)
+        {
+            if(mArmadoSistema == ArmadoSistema.Desarmado)
+            {
+                return;
+            }
+            else if (mArmadoSistema == ArmadoSistema.Modo0)
+            {
+                //DETERMINA SI HAY UN SENSOR ACTIVADO EN LA ZONA 0
+                var sensoresActivos = mSensoresModel.mSensores.FindAll(x => x.activado == true && x.zona == ZonaSensor.Zona0);
+
+               
+                if (sensoresActivos.Count > 0)
+                {
+                    //ARMA LA LISTA DE SENSORES ACTIVADOS EN UN STRING PARA EL MENSAJE DE LLAMDA
+                    string stringSensores = "";
+                    foreach (var sensor in sensoresActivos)
+                    {
+                        stringSensores += sensor.id;
+                        stringSensores += ",";
+                    }
+                    stringSensores = stringSensores.Remove(stringSensores.Length-1);
+
+                    //ACTIVA MENSAJE DE ALARMA Y SONIDO
+                    mCheckSensorState.Stop();
+                    mAlarmSound.PlayLooping();
+                    MessageBox.Show("Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + " por alarma del sensor " + stringSensores +
+                       "\r\n con el numero de usuario " + mAlertasModel.mNumeroUsuario);
+
+                }
+            }
+            else if (mArmadoSistema == ArmadoSistema.Modo1)
+            {
+                //DETERMINA SI HAY UN SENSOR ACTIVADO EN LA ZONA 1
+                var sensoresActivos = mSensoresModel.mSensores.FindAll(x => x.activado == true && x.zona == ZonaSensor.Zona1);
+
+                if(sensoresActivos.Count > 0)
+                {
+                    //ARMA LA LISTA DE SENSORES ACTIVADOS EN UN STRING PARA EL MENSAJE DE LLAMDA
+                    string stringSensores = "";
+                    foreach (var sensor in sensoresActivos)
+                    {
+                        stringSensores += sensor.id;
+                        stringSensores += ",";
+                    }
+                    stringSensores = stringSensores.Remove(stringSensores.Length-1);
+
+                    //ACTIVA MENSAJE DE ALARMA Y SONIDO
+                    mCheckSensorState.Stop();
+                    mAlarmSound.PlayLooping();
+                    MessageBox.Show("Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + " por alarma del sensor " + stringSensores + 
+                        "\r\n con el numero de usuario " + mAlertasModel.mNumeroUsuario);
+                    
+                }
+                
+            }
         }
     }
 

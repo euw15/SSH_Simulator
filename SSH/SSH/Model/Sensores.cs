@@ -29,7 +29,7 @@ namespace SSH.Model
 
         public bool LeerEstadoSensores()
         {
-            mSensores.Clear();
+           // mSensores.Clear();
             using (var reader = new StreamReader(@".//EstadoSensores.csv"))
             {
                
@@ -40,19 +40,28 @@ namespace SSH.Model
 
                     if(values.Length == 2)
                     {
-                        Sensor nuevoSensor = new Sensor();
+                      
                         int id      = 0;
                         int estado  = 0;
 
-                        var sensorIDEsNumero = int.TryParse(values[0], out id);
+                        var sensorIDEsNumero     = int.TryParse(values[0], out id);
                         var sersorEstadoEsNumero = int.TryParse(values[1], out estado);
 
                         if(sensorIDEsNumero  && sersorEstadoEsNumero)
                         {
-                            nuevoSensor.id = id;
-                            nuevoSensor.activado = Convert.ToBoolean(estado);
-
-                            mSensores.Add(nuevoSensor);
+                            Sensor sensorFound = mSensores.Find(x => x.id == id);
+                            if(sensorFound != null)
+                            {
+                                sensorFound.activado = Convert.ToBoolean(estado);
+                            }
+                            else
+                            {
+                                Sensor newSensor = new Sensor();
+                                newSensor.id = id;
+                                newSensor.activado = Convert.ToBoolean(estado);
+                                mSensores.Add(newSensor);
+                            }
+                           
                         }
                     }
                     
