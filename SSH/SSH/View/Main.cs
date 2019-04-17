@@ -25,7 +25,7 @@ namespace SSH
             mMainController.LblError            = LblError;
             mMainController.LblModo0            = LblModo0;
             mMainController.LblModo1            = LblModo1;
-            mMainController.LblActionRequeried  = LblActionRequeried;
+            mMainController.LblActionRequired  = LblActionRequired;
             mMainController.PicArmado           = PictureArmado;
             mMainController.PicBateria          = PictureBattery;
             mMainController.IniciarInterfaz();

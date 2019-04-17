@@ -11,13 +11,14 @@ namespace SSH.Controller
 {
     enum Comandos
     {
-        ArmarModo0,
+        ArmarModo0 = 0,
         ArmarModo1,
         Desarmar,
         EditarNumeroUsuario,
         EditarNumeroAgencia,
         AsociarZonas,
-        EditarNumerosArmado
+        EditarNumerosArmado,
+        Last
     }
 
     enum EnterCmdState
@@ -42,15 +43,18 @@ namespace SSH.Controller
         public Label LblModo1           { get; set; }
         public Label LblModo0           { get; set; }
         public Label LblComando         { get; set; }
-        public Label LblActionRequeried { get; set; }
+        public Label LblActionRequired { get; set; }
         public PictureBox PicArmado     { get; set; }
         public PictureBox PicBateria    { get; set; }
+
+        //ArmarModo0, ArmarModo1, Desarmar, EditarNumeroUsuario, EditarNumeroAgencia, AsociarZonas, EditarNumerosArmado,
+        private string[] CmdLabels = { "", "", "", "Ingrese numero de Usuario", "Ingrese numero de Agencia", "Ingrese numero de Zona", "Ingrese nueva clave de armado" };
 
         private Dictionary<string, Comandos>    mComandoEnumDict       = null;
         private Dictionary<Comandos, Delegate>  mDelegateComandos      = null;
 
         EnterCmdState commandCallState;
-        Comandos mPreviuosCommand;
+        Comandos mPreviousCommand;
         int mZonaIngresada;
 
         Alertas  mAlertasModel;
@@ -63,8 +67,8 @@ namespace SSH.Controller
         private Timer mCheckSensorState     = null;
         private Timer mCheckPrincipalSensor = null;
 
-        System.Media.SoundPlayer mAlarmSound = new System.Media.SoundPlayer(@".//alert.wav");
-        System.Media.SoundPlayer mSoftAlarmSound = new System.Media.SoundPlayer(@".//alert.wav");
+        System.Media.SoundPlayer mAlarmSound = new System.Media.SoundPlayer(@"..//..//Resources//alarm.wav");
+        System.Media.SoundPlayer mSoftAlarmSound = new System.Media.SoundPlayer(@"..//..//Resources//prealarm.wav");
 
         bool PrincipalSensorOn = false;
         int timeCount;
@@ -96,7 +100,7 @@ namespace SSH.Controller
             
             mRefreshSensorsTimer = new Timer();
             mRefreshSensorsTimer.Tick += new EventHandler(RefreshSensors);
-            mRefreshSensorsTimer.Tick += new EventHandler(RegreshBattery);
+            mRefreshSensorsTimer.Tick += new EventHandler(RefreshBattery);
             mRefreshSensorsTimer.Interval = 1000;
             mRefreshSensorsTimer.Start();
 
@@ -119,7 +123,7 @@ namespace SSH.Controller
             LblModo1.Visible    = false;
             LblBateria.Visible  = false;
             LblError.Visible    = false;
-            LblActionRequeried.Visible  = false;
+            LblActionRequired.Visible  = false;
         }
 
         public void EjecutarComando()
@@ -130,13 +134,13 @@ namespace SSH.Controller
                 string comandoIngresado = LblComando.Text;
                 if (LblComando.Text.Contains("*"))
                 {
-                    mPreviuosCommand = Comandos.ArmarModo0;
-                    mDelegateComandos[mPreviuosCommand].DynamicInvoke();
+                    mPreviousCommand = Comandos.ArmarModo0;
+                    mDelegateComandos[mPreviousCommand].DynamicInvoke();
                 }
                 else if (LblComando.Text.Contains("#"))
                 {
-                    mPreviuosCommand = Comandos.ArmarModo1;
-                    mDelegateComandos[mPreviuosCommand].DynamicInvoke();
+                    mPreviousCommand = Comandos.ArmarModo1;
+                    mDelegateComandos[mPreviousCommand].DynamicInvoke();
                 }
             }
             //LA PRIMERA VEZ QUE APRETA ENTER, ACEPTA EL COMANDO Y SE ALISTA PARA RECIBIR EL VALOR
@@ -144,7 +148,7 @@ namespace SSH.Controller
             else if (commandCallState == EnterCmdState.primeraLlamada)
             {
                 string comandoIngresado = LblComando.Text;
-                Comandos actualComando;
+                Comandos actualCommand;
                 int numeroDesarmado;
                 var isNumeric = int.TryParse(comandoIngresado, out numeroDesarmado);
                 if (isNumeric)
@@ -154,14 +158,15 @@ namespace SSH.Controller
                         Desarmar();
                     }
                 }
-                else if (mComandoEnumDict.ContainsKey(comandoIngresado))
+                if (mComandoEnumDict.ContainsKey(comandoIngresado))
                 {
-                    actualComando               = mComandoEnumDict[comandoIngresado];
-                    mPreviuosCommand            = actualComando;
+                    actualCommand               = mComandoEnumDict[comandoIngresado];
+                    mPreviousCommand            = actualCommand;
                     LblError.Visible            = false;
                     commandCallState            = EnterCmdState.segundaLlamada;
                     LblComando.Text             = "";
-                    LblActionRequeried.Visible  = true;
+                    LblActionRequired.Visible   = true;
+                    LblActionRequired.Text      = CmdLabels[(int)actualCommand];
                 }
                 else
                 {
@@ -169,12 +174,13 @@ namespace SSH.Controller
                 }
             }
             //ASOCIAR
-            else if (commandCallState == EnterCmdState.segundaLlamada && mPreviuosCommand == Comandos.AsociarZonas)
+            else if (commandCallState == EnterCmdState.segundaLlamada && mPreviousCommand == Comandos.AsociarZonas)
             {
                 string zonaIngresadaCmd = LblComando.Text;
                 if(zonaIngresadaCmd.Equals("0") || zonaIngresadaCmd.Equals("1"))
                 {
                     mZonaIngresada = Convert.ToInt32(zonaIngresadaCmd);
+                    LblActionRequired.Text = "Ingrese numero de sensor";
                     commandCallState = EnterCmdState.terceraLlamada;
                     LblComando.Text = "";
                 }
@@ -186,7 +192,7 @@ namespace SSH.Controller
             //TODOS LOS COMANDOS PASAN POR ACA EN EL SEGUNDO O TERCER VEZ QUE APRETAN ENTER MENOS ARMAR
             else
             {
-                mDelegateComandos[mPreviuosCommand].DynamicInvoke();
+                mDelegateComandos[mPreviousCommand].DynamicInvoke();
             }
             
                 
@@ -209,7 +215,7 @@ namespace SSH.Controller
             if(LblError.Visible == true)
             {
                 LblError.Visible = false;
-                LblActionRequeried.Visible = false;
+                LblActionRequired.Visible = false;
                 commandCallState = EnterCmdState.primeraLlamada;
             }
            
@@ -429,7 +435,7 @@ namespace SSH.Controller
 
         private void CleanCommandView()
         {
-            LblActionRequeried.Visible = false;
+            LblActionRequired.Visible = false;
             LblComando.Text = "";
             commandCallState = EnterCmdState.primeraLlamada;
         }
@@ -439,7 +445,7 @@ namespace SSH.Controller
            mSensoresModel.LeerEstadoSensores();
         }
 
-        private void RegreshBattery(object sender, EventArgs e)
+        private void RefreshBattery(object sender, EventArgs e)
         {
             if (mBateria.isBatteryLow())
             {

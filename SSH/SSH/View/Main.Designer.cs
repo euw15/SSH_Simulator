@@ -57,7 +57,7 @@
             this.PictureArmado = new System.Windows.Forms.PictureBox();
             this.PictureBattery = new System.Windows.Forms.PictureBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.LblActionRequeried = new System.Windows.Forms.Label();
+            this.LblActionRequired = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PictureArmado)).BeginInit();
@@ -248,7 +248,7 @@
             // 
             this.panel1.BackColor = System.Drawing.SystemColors.ButtonHighlight;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.panel1.Controls.Add(this.LblActionRequeried);
+            this.panel1.Controls.Add(this.LblActionRequired);
             this.panel1.Controls.Add(this.LblCommando);
             this.panel1.Controls.Add(this.LblError);
             this.panel1.Controls.Add(this.LblBateria);
@@ -354,12 +354,12 @@
             // 
             // LblActionRequeried
             // 
-            this.LblActionRequeried.AutoSize = true;
-            this.LblActionRequeried.Location = new System.Drawing.Point(7, 9);
-            this.LblActionRequeried.Name = "LblActionRequeried";
-            this.LblActionRequeried.Size = new System.Drawing.Size(72, 13);
-            this.LblActionRequeried.TabIndex = 5;
-            this.LblActionRequeried.Text = "Ingrese Valor:";
+            this.LblActionRequired.AutoSize = true;
+            this.LblActionRequired.Location = new System.Drawing.Point(7, 9);
+            this.LblActionRequired.Name = "LblActionRequeried";
+            this.LblActionRequired.Size = new System.Drawing.Size(72, 13);
+            this.LblActionRequired.TabIndex = 5;
+            this.LblActionRequired.Text = "Ingrese Valor:";
             // 
             // Main
             // 
@@ -431,7 +431,7 @@
         private System.Windows.Forms.Label LblBateriaIcon;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label LblCommando;
-        private System.Windows.Forms.Label LblActionRequeried;
+        private System.Windows.Forms.Label LblActionRequired;
     }
 }
 
