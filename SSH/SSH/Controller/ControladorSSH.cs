@@ -48,7 +48,7 @@ namespace SSH.Controller
         public PictureBox PicBateria    { get; set; }
 
         //ArmarModo0, ArmarModo1, Desarmar, EditarNumeroUsuario, EditarNumeroAgencia, AsociarZonas, EditarNumerosArmado,
-        private string[] CmdLabels = { "", "", "", "Ingrese numero de Usuario", "Ingrese numero de Agencia", "Ingrese numero de Zona", "Ingrese nueva clave de armado" };
+        private string[] CmdLabels = { "", "", "", "Ingrese número de Usuario", "Ingrese número de Agencia", "Ingrese número de Zona", "Ingrese nueva clave de armado" };
 
         private Dictionary<string, Comandos>    mComandoEnumDict       = null;
         private Dictionary<Comandos, Delegate>  mDelegateComandos      = null;
@@ -156,6 +156,7 @@ namespace SSH.Controller
                     if(numeroDesarmado == mAlertasModel.mCodigoDeArmado)
                     {
                         Desarmar();
+                        return;
                     }
                 }
                 if (mComandoEnumDict.ContainsKey(comandoIngresado))
@@ -180,7 +181,7 @@ namespace SSH.Controller
                 if(zonaIngresadaCmd.Equals("0") || zonaIngresadaCmd.Equals("1"))
                 {
                     mZonaIngresada = Convert.ToInt32(zonaIngresadaCmd);
-                    LblActionRequired.Text = "Ingrese numero de sensor";
+                    LblActionRequired.Text = "Ingrese número de sensor";
                     commandCallState = EnterCmdState.terceraLlamada;
                     LblComando.Text = "";
                 }
