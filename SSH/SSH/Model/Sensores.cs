@@ -59,6 +59,7 @@ namespace SSH.Model
                                 Sensor newSensor = new Sensor();
                                 newSensor.id = id;
                                 newSensor.activado = Convert.ToBoolean(estado);
+                                newSensor.zona = ZonaSensor.Zona0;
                                 mSensores.Add(newSensor);
                             }
                            

@@ -61,15 +61,19 @@ namespace SSH.Controller
 
         private Timer mRefreshSensorsTimer  = null;
         private Timer mCheckSensorState     = null;
+        private Timer mCheckPrincipalSensor = null;
 
         System.Media.SoundPlayer mAlarmSound = new System.Media.SoundPlayer(@".//alert.wav");
+        System.Media.SoundPlayer mSoftAlarmSound = new System.Media.SoundPlayer(@".//alert.wav");
+
+        bool PrincipalSensorOn = false;
+        int timeCount;
 
         public ControladorSSH()
         {
             mComandoEnumDict = new Dictionary<string, Comandos>();
             mComandoEnumDict.Add("*", Comandos.ArmarModo0);
             mComandoEnumDict.Add("#", Comandos.ArmarModo1);
-            mComandoEnumDict.Add("102", Comandos.Desarmar);
             mComandoEnumDict.Add("103", Comandos.EditarNumeroUsuario);
             mComandoEnumDict.Add("104", Comandos.EditarNumeroAgencia);
             mComandoEnumDict.Add("105", Comandos.AsociarZonas);
@@ -100,6 +104,12 @@ namespace SSH.Controller
             mCheckSensorState.Tick += new EventHandler(CheckSensorStatus);
             mCheckSensorState.Interval = 2000;
             mCheckSensorState.Start();
+
+            mCheckPrincipalSensor = new Timer();
+            mCheckPrincipalSensor.Tick += new EventHandler(CheckPrincipalSensor);
+            mCheckPrincipalSensor.Interval = 1000;
+            mCheckPrincipalSensor.Start();
+
         }
 
         public void IniciarInterfaz()
@@ -134,9 +144,17 @@ namespace SSH.Controller
             else if (commandCallState == EnterCmdState.primeraLlamada)
             {
                 string comandoIngresado = LblComando.Text;
-
                 Comandos actualComando;
-                if (mComandoEnumDict.ContainsKey(comandoIngresado))
+                int numeroDesarmado;
+                var isNumeric = int.TryParse(comandoIngresado, out numeroDesarmado);
+                if (isNumeric)
+                {
+                    if(numeroDesarmado == mAlertasModel.mCodigoDeArmado)
+                    {
+                        Desarmar();
+                    }
+                }
+                else if (mComandoEnumDict.ContainsKey(comandoIngresado))
                 {
                     actualComando               = mComandoEnumDict[comandoIngresado];
                     mPreviuosCommand            = actualComando;
@@ -288,6 +306,9 @@ namespace SSH.Controller
                     PicArmado.Image = global::SSH.Properties.Resources.iconfinder_ledorange_1787;
                     mAlarmSound.Stop();
                     mCheckSensorState.Start();
+                    PrincipalSensorOn = false;
+                    timeCount = 0;
+                    mSoftAlarmSound.Stop();
                 }
                 else
                 {
@@ -441,11 +462,11 @@ namespace SSH.Controller
             else if (mArmadoSistema == ArmadoSistema.Modo0)
             {
                 //DETERMINA SI HAY UN SENSOR ACTIVADO EN LA ZONA 0
-                var sensoresActivos = mSensoresModel.mSensores.FindAll(x => x.activado == true && x.zona == ZonaSensor.Zona0);
-
-               
+                var sensoresActivos = mSensoresModel.mSensores.FindAll(x => x.activado == true  && x.id != 1);
+                
                 if (sensoresActivos.Count > 0)
                 {
+                    
                     //ARMA LA LISTA DE SENSORES ACTIVADOS EN UN STRING PARA EL MENSAJE DE LLAMDA
                     string stringSensores = "";
                     foreach (var sensor in sensoresActivos)
@@ -487,6 +508,36 @@ namespace SSH.Controller
                     
                 }
                 
+            }
+        }
+
+        private void CheckPrincipalSensor(object sender, EventArgs e)
+        {
+            if (PrincipalSensorOn && mArmadoSistema == ArmadoSistema.Modo0 && timeCount <= 0)
+            {
+                mSoftAlarmSound.PlayLooping();
+                timeCount++;
+            }
+            else if(timeCount < 30 && timeCount > 0 && mArmadoSistema == ArmadoSistema.Modo0)
+            {
+                timeCount++;
+            }
+            else if(timeCount >= 30 && mArmadoSistema == ArmadoSistema.Modo0)
+            {
+                mAlarmSound.PlayLooping();
+                MessageBox.Show("Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + " por alarma del sensor 1"  +
+                    "\r\n con el numero de usuario " + mAlertasModel.mNumeroUsuario);
+                PrincipalSensorOn = false;
+                timeCount = 0;
+            }
+            else
+            {
+                //DETERMINA SI HAY UN SENSOR ACTIVADO EN LA ZONA 0
+                var sensoresActivos = mSensoresModel.mSensores.FindAll(x => x.activado == true && x.zona == ZonaSensor.Zona0 && x.id == 1);
+                if (sensoresActivos.Count > 0)
+                {
+                    PrincipalSensorOn = true;
+                }
             }
         }
     }
