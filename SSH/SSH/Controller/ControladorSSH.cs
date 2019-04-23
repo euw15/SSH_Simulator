@@ -70,7 +70,7 @@ namespace SSH.Controller
         System.Media.SoundPlayer mAlarmSound = new System.Media.SoundPlayer(@"..//..//Resources//alarm.wav");
         System.Media.SoundPlayer mSoftAlarmSound = new System.Media.SoundPlayer(@"..//..//Resources//prealarm.wav");
 
-        bool PrincipalSensorOn = false;
+        bool MainSensorOn = false;
         int timeCount;
 
         public ControladorSSH()
@@ -110,7 +110,7 @@ namespace SSH.Controller
             mCheckSensorState.Start();
 
             mCheckPrincipalSensor = new Timer();
-            mCheckPrincipalSensor.Tick += new EventHandler(CheckPrincipalSensor);
+            mCheckPrincipalSensor.Tick += new EventHandler(CheckMainSensor);
             mCheckPrincipalSensor.Interval = 1000;
             mCheckPrincipalSensor.Start();
 
@@ -313,7 +313,7 @@ namespace SSH.Controller
                     PicArmado.Image = global::SSH.Properties.Resources.iconfinder_ledorange_1787;
                     mAlarmSound.Stop();
                     mCheckSensorState.Start();
-                    PrincipalSensorOn = false;
+                    MainSensorOn = false;
                     timeCount = 0;
                     mSoftAlarmSound.Stop();
                 }
@@ -518,9 +518,17 @@ namespace SSH.Controller
             }
         }
 
-        private void CheckPrincipalSensor(object sender, EventArgs e)
+        private void CheckMainSensor(object sender, EventArgs e)
         {
-            if (PrincipalSensorOn && mArmadoSistema == ArmadoSistema.Modo0 && timeCount <= 0)
+            if (!MainSensorOn)
+            {
+                try //Esto porque en el primer llamado puede que mSensoresModel.mSensores no este aun inicializado
+                {
+                    MainSensorOn = mSensoresModel.mSensores[0].activado && mArmadoSistema == ArmadoSistema.Modo0;
+                }
+                catch (Exception) { }
+            }
+            if (MainSensorOn && mArmadoSistema == ArmadoSistema.Modo0 && timeCount <= 0)
             {
                 mSoftAlarmSound.PlayLooping();
                 timeCount++;
@@ -529,22 +537,18 @@ namespace SSH.Controller
             {
                 timeCount++;
             }
-            else if(timeCount >= 30 && mArmadoSistema == ArmadoSistema.Modo0)
+            else if(timeCount == 30 && mArmadoSistema == ArmadoSistema.Modo0)
             {
+                timeCount++;
+                mSoftAlarmSound.Stop();
                 mAlarmSound.PlayLooping();
                 MessageBox.Show("Llamando a el numero de agencia: " + mAlertasModel.mNumeroTelefono + " por alarma del sensor 1"  +
                     "\r\n con el numero de usuario " + mAlertasModel.mNumeroUsuario);
-                PrincipalSensorOn = false;
-                timeCount = 0;
             }
-            else
+            else if(mArmadoSistema == ArmadoSistema.Desarmado)
             {
-                //DETERMINA SI HAY UN SENSOR ACTIVADO EN LA ZONA 0
-                var sensoresActivos = mSensoresModel.mSensores.FindAll(x => x.activado == true && x.zona == ZonaSensor.Zona0 && x.id == 1);
-                if (sensoresActivos.Count > 0)
-                {
-                    PrincipalSensorOn = true;
-                }
+                timeCount = 0;
+                MainSensorOn = false;
             }
         }
     }
